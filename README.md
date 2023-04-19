@@ -1,7 +1,6 @@
 # HiQualProp
 
-This repository contains the data and the implementation of the experiments of the paper [HiQualProp: A Human-Annotated Dataset for Detecting Online
-Propaganda](link).
+This repository contains the data and the implementation of the experiments of the paper *HiQualProp: A Human-Annotated Dataset for Detecting Online Propaganda*.
 
 
 ## Overview
@@ -13,7 +12,7 @@ In this work we present HiQualProp, a high-quality human-annotated dataset for d
 3. An extension of prompt-based learning to the setting of multiple connected labels and to handle numerical features.
 4. Experiments on the performance of incorporating author features in both full fine-tuning and few-shot learning.
 
-You can find more details of this work in our [paper](link).
+You can find more details of this work in our paper.
 
 
 ## Requirements
