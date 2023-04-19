@@ -26,7 +26,7 @@ pip install -r requirements.txt
 
 ## Data
 
-**We only share tweet-ids and labels and not processed datasets in this repository due to Twitter privacy policy. However, upon individual requests (`a.maarouf@lmu.de`), we can make the data available.**
+**We only share tweet-ids and labels and not processed datasets in this repository due to Twitter privacy policy. However, upon individual requests (`blinded`), we can make the data available.**
 
 We keep our annotated HiQualProp dataset in `Data/HiQualProp`.
 
@@ -83,17 +83,4 @@ python few_shot/lmbff_trainer.py conf_lmbff=k16_bc
 
 ## Bugs or questions?
 
-Please address any issues rergarding the code to Abdurahman Maarouf (`a.maarouf@lmu.de`).
-
-## Citation
-
-Please cite our paper if you use HiQualProp in your work:
-
-```bibtex
-@article{maarouf2023hiqualprop,
-   title={HiQualProp: A Human-Annotated Dataset for Detecting Online Propaganda},
-   author={Maarouf, Abdurahman and B{\"a}r, Dominik and Geissler, Dominique and Feuerriegel},
-   booktitle={arXiv},
-   year={2023}
-}
-```
+Please address any issues rergarding the code to \[Blinded\] (`blinded`).
