@@ -1,0 +1,41 @@
+task: classification
+num_classes: 2
+
+logging:
+  path: full/HiQualProp_MF
+
+seeds: #length of this list corresponds to the number of runs (& different data splits)
+  - 123
+  - 234
+  - 345
+  - 456
+  - 567
+
+data:
+  data_path: Data/HiQualProp_with_author_feats/df_tweets_HiQualProp_with_author_feats.csv
+  test_data_path:
+  data_splitted_dir: full/data_splitted/HiQualProp_MF
+  need_data_prep: True
+  train_data: HiQualProp_MF
+  train_label: labels
+  test_label: labels
+  text: text_normalized
+  meta_feats: True
+  meta_feat_names_path: Data/author_feat_names.txt
+  emojis: True
+  emojis_names_path: Data/emojis.txt
+
+plms:
+  - bert-large-cased
+  - roberta-large
+  - vinai/bertweet-large
+
+train_args:
+  num_freeze_layers: 16
+  batch_size_train: 32
+  batch_size_val: 32
+  eval_steps: 50
+  save_total_limit: 5
+  learning_rate: 0.00004
+  num_train_epochs: 5
+  early_stopping_patience: 5

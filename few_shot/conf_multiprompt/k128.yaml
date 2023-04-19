@@ -1,0 +1,107 @@
+k: 128
+
+paths:
+  config_lmbff_bc: few_shot/LMBFF_BC/config_lmbff_bc.yaml
+  config_lmbff_mc: few_shot/LMBFF_MC/config_lmbff_mc.yaml
+  meta_feat_names_path: Data/author_feat_names.txt
+  performance_logging: few_shot/MultiPrompt/
+
+seeds:
+  - 123
+  - 234
+  - 345
+  - 456
+  - 567
+
+prompt_models:
+  need_train_bc: True
+  need_train_mc: True
+  template_train_batch_size: 64
+  verbalizer_train_batch_size: 64
+  train_batch_size: 32
+
+features:
+  feature_sets:
+    - meta_feats
+    - truncated_meta_feats
+    - author_feats
+    - prob_feats
+  truncation_first_n: 30
+
+cross_fitting: False
+
+models:
+  elasticnet:
+    C:
+      - 0.1
+      - 0.25
+      - 0.5
+      - 1.0
+      - 2.0
+      - 4
+      - 8
+    l1_ratio:
+      - 0.1
+      - 0.15
+      - 0.2
+      - 0.25
+      - 0.3
+      - 0.35
+  neuralnet:
+    dropout:
+      - 0.2
+      - 0.4
+    input_hidden_layer_dim_ratio:
+      - 0.5
+      - 1
+      - 1.5
+      - 2
+    lr:
+      - 0.001
+      - 0.01
+    momentum:
+      - 0.9
+    train_batch_size:
+      - 2
+      - 4
+      - 8
+      - 16
+    val_batch_size:
+      - 16
+    test_batch_size:
+      - 32
+    epochs:
+      - 50
+    min_delta:
+      - 0.0
+    patience:
+      - 3
+  # xgboost:
+  #   learning_rate:
+  #     - 0.01
+  #     - 0.05
+  #     - 0.1
+  #     - 0.2
+  #   gamma:
+  #     - 0
+  #     - 0.25
+  #     - 0.5
+  #   reg_alpha:
+  #     - 0
+  #   reg_lambda:
+  #     - 0
+  #     - 1
+  #     - 10
+  #   max_depth:
+  #     - 4
+  #     - 5
+  #     - 6
+  #     - 8
+  #   subsample:
+  #     - 0.8
+  #   colsample_bytree:
+  #     - 0.8
+  #   gpu_id:
+  #     - -1
+  #   early_stopping_rounds:
+  #     - 5

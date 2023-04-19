@@ -1,0 +1,7 @@
+__pycache__
+outputs
+multirun
+df_tweets_HiQualProp.csv
+df_tweets_HiQualProp_with_author_feats.csv
+df_tweets_HiQualProp_with_author_feats_string_description.csv
+df_tweets_TWE.csv
