@@ -1,5 +1,3 @@
-# from https://github.com/VinAIResearch/BERTweet/blob/master/TweetNormalizer.py
-
 from emoji import demojize
 from nltk.tokenize import TweetTokenizer
 import numpy as np
@@ -14,6 +12,7 @@ tokenizer = TweetTokenizer()
 
 
 def normalizeToken(token):
+    # from https://github.com/VinAIResearch/BERTweet/blob/master/TweetNormalizer.py
     lowercased_token = token.lower()
     if token.startswith("@"):
         return "@USER"
@@ -31,6 +30,7 @@ def normalizeToken(token):
         
 
 def normalizeTweet(tweet):
+    # from https://github.com/VinAIResearch/BERTweet/blob/master/TweetNormalizer.py
     tokens = tokenizer.tokenize(tweet.replace("’", "'").replace("…", "...").replace("🏻\u200d♂", ""))
     normTweet = " ".join([normalizeToken(token) for token in tokens])
 

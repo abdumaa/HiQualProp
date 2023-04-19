@@ -1,6 +1,3 @@
-# Script to combine text and numerical/categorical features for sequence classification
-# Similar to: https://colab.research.google.com/drive/1F7COnwHqcLDPg_SS-oFgW3c2GPDWnS5Y#scrollTo=BAQFbN-wBpoz
-
 import torch
 from torch import nn
 from transformers import RobertaForSequenceClassification, RobertaModel, BertForSequenceClassification, BertModel

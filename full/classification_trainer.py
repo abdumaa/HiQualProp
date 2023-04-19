@@ -1,7 +1,7 @@
 import custom_sequence_classification as csc
 from utils import prepare_data_for_modelling
 from transformers import AutoTokenizer, TrainingArguments, Trainer, AutoModelForSequenceClassification, EarlyStoppingCallback, IntervalStrategy, set_seed
-from datasets import load_dataset, ClassLabel, DatasetDict
+from datasets import load_dataset, ClassLabel
 import torch
 import hydra
 from omegaconf import DictConfig

@@ -1,15 +1,12 @@
 from openprompt.config import get_config_from_file
 from few_shot import lmbff_trainer as lmbff
 from few_shot.utils_nn import NeuralNetworkTrainer
-import yaml
 import xgboost as xgb
-import importlib
 import pandas as pd
 import os
 import hydra
 from omegaconf import DictConfig, OmegaConf
-# importlib.reload(lmbff)
-from sklearn.linear_model import LogisticRegression, ElasticNetCV
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import f1_score, precision_score, recall_score, accuracy_score, roc_auc_score, average_precision_score
 from sklearn.model_selection import ParameterGrid
 
