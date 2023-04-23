@@ -1,5 +1,6 @@
 # Automatic prompt generation procedure as in LMBFF paper (https://arxiv.org/abs/2012.15723)
 import logging
+import time
 import copy
 import os
 import hydra
@@ -22,6 +23,10 @@ from typing import OrderedDict
 import yaml
 from few_shot import utils
 from few_shot.utils import classification_metrics
+
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 class CustomClassificationRunner(ClassificationRunner):
@@ -163,9 +168,6 @@ class LMBFFPromptGenerator():
                 best_v = open("{}best_verbalizer/{}_best_verbalizer_k{}.txt".format(path_prefix, seed, self.config["k"]), "r").read().replace("\n", " ").split(" ")
                 self.best_verbalizer_dict[seed] = ManualVerbalizer(self.tokenizer, num_classes=self.config["num_classes"], label_words=best_v)
 
-        if not os.path.exists(self.config["logging"]["path"]):
-            os.makedirs(self.config["logging"]["path"])
-
 
     def _prepare_data_fs(self):
         data =  pd.read_csv(self.config["data"]["dataset_file_path"])
@@ -183,11 +185,11 @@ class LMBFFPromptGenerator():
 
             # Standardscaler
             if self.config["data"]["meta_feats"]:
-                author_feats = open(self.config["data"]["meta_feat_names_path"], "r").read().replace("\n", " ").split(" ")
+                author_feats = open(self.config["data"]["author_feat_names_path"], "r").read().replace("\n", " ").split(" ")
                 scaler = StandardScaler()
-                data_train[author_feats[-18:]] = scaler.fit_transform(data_train[author_feats[-18:]])
-                data_test[author_feats[-18:]] = scaler.transform(data_test[author_feats[-18:]])
-                data_val[author_feats[-18:]] = scaler.transform(data_val[author_feats[-18:]])
+                data_train[author_feats] = scaler.fit_transform(data_train[author_feats])
+                data_test[author_feats] = scaler.transform(data_test[author_feats])
+                data_val[author_feats] = scaler.transform(data_val[author_feats])
 
             # Few Shot Sampler
             k = self.config["k"]
@@ -478,7 +480,9 @@ class LMBFFPromptGenerator():
             dataset_dict = {1: {"op": {"train": fs_train_dataset_op, "val": fs_val_dataset_op, "test": test_dataset_op}}}
         else:
             if self.config["data"]["need_data_prep"]:
+                logger.info("Preparing data for label {}, k {}...".format(self.config["data"]["label"], self.config["k"]))
                 self._prepare_data_fs()
+            logger.info("Reading prepared data for label {}, k {}...".format(self.config["data"]["label"], self.config["k"]))
             dataset_dict = self._read_prepared_data_fs()           
         
         df_performances = pd.DataFrame({"PLM": self.config["plm"]["model_path"], "setting": "FS (k={})".format(self.config["k"]), "seed": self.seeds, "best_template": None, "best_verbalizer": None})
@@ -486,6 +490,7 @@ class LMBFFPromptGenerator():
             df_performances[metric] = None
 
         for seed in self.seeds:
+            logger.info("Starting run for label {}, k {}, seed {}...".format(self.config["data"]["label"], self.config["k"], seed))
             set_seed(seed)
             fs_train_dataset = dataset_dict[seed]["op"]["train"]
             fs_val_dataset = dataset_dict[seed]["op"]["val"]
@@ -493,8 +498,10 @@ class LMBFFPromptGenerator():
 
             # Generate Template
             if self.config["auto_t"]:
-                print("Best Template Search")
+                logger.info("Best Template Search...")
+                start_time = time.time()
                 self.best_template_dict[seed], best_template_text = self.generate_template(fs_train_dataset, fs_val_dataset)
+                logger.info("Best Template Search finished, took {} seconds".format(time.time() - start_time))
                 with open("{}best_templates/{}_best_template_k{}.txt".format(self.config["logging"]["path"], seed, self.config["k"]), "w") as text_file:
                     text_file.write(best_template_text)
                 torch.cuda.empty_cache()
@@ -508,8 +515,10 @@ class LMBFFPromptGenerator():
 
             # Generate Verbalizer
             if self.config["auto_v"]:
-                print("Best Verbalizer Search")
+                logger.info("Best Verbalizer Search...")
+                start_time = time.time()
                 self.best_verbalizer_dict[seed], best_label_words = self.generate_verbalizer(fs_train_dataset, fs_val_dataset, self.best_template_dict[seed])
+                logger.info("Best Verbalizer Search finished, took {} seconds".format(time.time() - start_time))
                 with open("{}best_verbalizer/{}_best_verbalizer_k{}.txt".format(self.config["logging"]["path"], seed, self.config["k"]), "w") as text_file:
                     text_file.write("\n".join(best_label_words))
                 torch.cuda.empty_cache()
@@ -522,7 +531,10 @@ class LMBFFPromptGenerator():
             df_performances.loc[df_performances["seed"]==seed, "best_verbalizer"] = " |".join([" &".join(i) for i in self.best_verbalizer_dict[seed].label_words])
 
             # Train and evaluate
+            logger.info("Starting prompt-based finetuning...")
+            start_time = time.time()
             metric_dict = self.evaluate(fs_train_dataset, fs_val_dataset, test_dataset, self.best_template_dict[seed], self.best_verbalizer_dict[seed], seed)
+            logger.info("Prompt-based finetuning finished, took {} seconds".format(time.time() - start_time))
             for metric in self.config["classification"]["test_metric"]:
                 df_performances.loc[df_performances["seed"]==seed, metric] = metric_dict[metric]
 

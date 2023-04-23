@@ -1,10 +1,13 @@
-k: 16
+k: 64
 
 paths:
-  config_lmbff_bc: few_shot/LMBFF_BC/config_lmbff_bc.yaml
-  config_lmbff_mc: few_shot/LMBFF_MC/config_lmbff_mc.yaml
-  meta_feat_names_path: Data/author_feat_names.txt
-  performance_logging: few_shot/MultiPrompt/
+  config_lmbff_bc: Code/modelling/LMBFF/config_lmbff_bc.yaml
+  config_lmbff_mc: Code/modelling/LMBFF_MC/config_lmbff_mc.yaml
+  meta_feat_names_path: Code/modelling/data/meta_feat_names.txt
+  truncated_meta_feat_names_path: Code/modelling/data/truncated_meta_feat_names.txt
+  author_feat_names_path: Code/modelling/data/author_feat_names.txt
+  account_feat_names_path: Code/modelling/data/account_feat_names.txt
+  performance_logging: Code/modelling/MultiPrompt/
 
 seeds:
   - 123
@@ -16,17 +19,17 @@ seeds:
 prompt_models:
   need_train_bc: True
   need_train_mc: True
-  template_train_batch_size: 8
-  verbalizer_train_batch_size: 8
-  train_batch_size: 4
+  template_train_batch_size: 32
+  verbalizer_train_batch_size: 32
+  train_batch_size: 16
 
 features:
   feature_sets:
     - meta_feats
     - truncated_meta_feats
     - author_feats
+    - account_feats
     - prob_feats
-  truncation_first_n: 30
 
 cross_fitting: False
 
