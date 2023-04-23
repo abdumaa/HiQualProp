@@ -201,13 +201,13 @@ class MultiPromptHead():
 
 
     def run_experiments(self):
-        logger.info("Preparing data for k {}...".format(self.config["k"]))
+        logger.info("Preparing data for k {}...".format(self.config_mp["k"]))
         self.get_prompt_forwards_probs()
         df_performance = pd.DataFrame(columns=["seed", "model", "feature_set", "best_grid", "accuracy", "precision", "recall", "f1", "auc", "aps"])
         for seed in self.data_dict_bc.keys():
             for model_type in list(self.config_mp["models"].keys()):
                 for feature_set in self.config_mp["features"]["feature_sets"]:
-                    logger.info("Starting run for k {}, model {}, feature set {}, seed {}...".format(self.config["k"], model_type, feature_set, seed))
+                    logger.info("Starting run for k {}, model {}, feature set {}, seed {}...".format(self.config_mp["k"], model_type, feature_set, seed))
                     if feature_set == "meta_feats":
                         features = self.meta_feats
                     elif feature_set == "truncated_meta_feats":
