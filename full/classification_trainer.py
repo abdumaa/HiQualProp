@@ -3,6 +3,8 @@ from utils import prepare_data_for_modelling
 from transformers import AutoTokenizer, TrainingArguments, Trainer, AutoModelForSequenceClassification, EarlyStoppingCallback, IntervalStrategy, set_seed
 from datasets import load_dataset, ClassLabel
 import torch
+import logging
+import time
 import hydra
 from omegaconf import DictConfig
 import numpy as np
@@ -12,6 +14,10 @@ import copy
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn import metrics
+
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 class ClassificationTrainer():
@@ -26,8 +32,8 @@ class ClassificationTrainer():
         else:
             self.emoji_tokens = None
         
-        if self.config["data"]["meta_feats"]:
-            self.author_feats = open(self.config["data"]["meta_feat_names_path"], "r").read().replace("\n", " ").split(" ")
+        if self.config["data"]["author_feats"]:
+            self.author_feats = open(self.config["data"]["author_feat_names_path"], "r").read().replace("\n", " ").split(" ")
         else:
             self.author_feats = None
 
@@ -44,29 +50,40 @@ class ClassificationTrainer():
             # Split dataset (70/10/20)
             if self.config["data"]["test_data_path"]:
                 _, data_test = train_test_split(test_data, test_size=0.2, random_state=seed, stratify=test_data[self.test_label])
-                data_train, data_val = train_test_split(data, test_size=0.1, random_state=seed, stratify=data[self.test_label])
-                data_test = data_test[list(data_train.columns)]
+                if self.test_label in data.columns:
+                    strat_col = self.test_label
+                else:
+                    strat_col = self.train_label
+                if self.config["data"]["val_size"]:
+                    val_size = self.config["data"]["val_size"]
+                else:
+                    val_size = 0.1
+                data_train, data_val = train_test_split(data, test_size=val_size, random_state=seed, stratify=data[strat_col])
+                train_cols = list(data_train.columns)
+                if self.test_label not in train_cols:
+                    train_cols.append(self.test_label)
+                data_test = data_test[train_cols]
             else:
                 data_train, data_test = train_test_split(data, test_size=0.2, random_state=seed, stratify=data[self.test_label])
                 data_train, data_val = train_test_split(data_train, train_size=(0.7/0.8), test_size=(0.1/0.8), random_state=seed, stratify=data_train[self.test_label])
 
             # Different column names handling in case of e.g. training with weak labels
             if self.test_label != self.train_label:
+                data_test = data_test.drop(columns=[self.train_label])
                 if self.test_label in data.columns:
                     data_train = data_train.drop(columns=[self.test_label])
                     data_val = data_val.drop(columns=[self.test_label])
-                    data_test = data_test.drop(columns=[self.train_label])
 
                 data_train = data_train.rename(columns={self.train_label: self.test_label})
                 data_val = data_val.rename(columns={self.train_label: self.test_label})
                 
 
             # Standardscaler
-            if self.config["data"]["meta_feats"]:
+            if self.config["data"]["author_feats"]:
                 scaler = StandardScaler()
-                data_train[self.author_feats[-18:]] = scaler.fit_transform(data_train[self.author_feats[-18:]])
-                data_test[self.author_feats[-18:]] = scaler.transform(data_test[self.author_feats[-18:]])
-                data_val[self.author_feats[-18:]] = scaler.transform(data_val[self.author_feats[-18:]])
+                data_train[self.author_feats] = scaler.fit_transform(data_train[self.author_feats])
+                data_test[self.author_feats] = scaler.transform(data_test[self.author_feats])
+                data_val[self.author_feats] = scaler.transform(data_val[self.author_feats])
 
             # Save Samples
             save_directory = "{}/seed_{}/".format(self.config["data"]["data_splitted_dir"], seed)
@@ -125,21 +142,28 @@ class ClassificationTrainer():
         )
 
         # Fine tuning
+        logger.info("Beginning training...")
+        start_time = time.time()
         trainer.train()
+        logger.info("Training finished, took {} seconds".format(time.time() - start_time))
 
         # Save model
         #trainer.save_model("{}".format(self.config["logging"]["path"]))
 
         # Test and return performance metrics
+        logger.info("Beginning testing...")
         return trainer.predict(dataset["test"])[2]
 
 
     def run_expirements(self):
         # Prepare data
         if not hasattr(self, "data_dict") and self.config["data"]["need_data_prep"]:
+            logger.info("Preparing data {}...".format(self.config["data"]["train_data"]))
             self._prepare_data()
+            logger.info("Reading data...")
             self._read_prepared_data()
         elif not hasattr(self, "data_dict") and not self.config["data"]["need_data_prep"]:
+            logger.info("Reading data {}...".format(self.config["data"]["train_data"]))
             self._read_prepared_data()
 
         df_performance = pd.DataFrame(columns=["seed", "model", "train_data", "author_features"])
@@ -154,9 +178,10 @@ class ClassificationTrainer():
 
             # Run expirements
             for seed in self.seeds:
+                logger.info("Starting run for Data {}, PLM {}, seed {}...".format(self.config["data"]["train_data"], plm, seed))
                 set_seed(seed)
                 # Load model
-                if self.config["data"]["meta_feats"]:
+                if self.config["data"]["author_feats"]:
                     if plm == "bert-large-cased":
                         model = csc.CustomBertForSequenceClassification.from_pretrained(plm, num_labels=2, num_extra_dims=len(self.author_feats))
                     else:
@@ -185,7 +210,8 @@ class ClassificationTrainer():
                             param.requires_grad = False
 
                 results = self.train_and_test(copy.deepcopy(model), data)
-                results.update({"seed": seed, "model": plm, "train_data": self.config["data"]["train_data"], "author_features": self.config["data"]["meta_feats"]})
+                logger.info("Finished run for PLM {}, seed {}...".format(plm, seed))
+                results.update({"seed": seed, "model": plm, "train_data": self.config["data"]["train_data"], "author_features": self.config["data"]["author_feats"]})
                 df_performance = df_performance.append(results, ignore_index=True)
                 df_performance.to_csv("{}/results_full_finetuning.csv".format(self.config["logging"]["path"], index=False))
 

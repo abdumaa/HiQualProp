@@ -3,7 +3,10 @@ k: 32
 paths:
   config_lmbff_bc: few_shot/LMBFF_BC/config_lmbff_bc.yaml
   config_lmbff_mc: few_shot/LMBFF_MC/config_lmbff_mc.yaml
-  meta_feat_names_path: Data/author_feat_names.txt
+  meta_feat_names_path: Data/meta_feat_names.txt
+  truncated_meta_feat_names_path: Data/truncated_meta_feat_names.txt
+  author_feat_names_path: Data/author_feat_names.txt
+  account_feat_names_path: Data/account_feat_names.txt
   performance_logging: few_shot/MultiPrompt/
 
 seeds:
@@ -25,8 +28,8 @@ features:
     - meta_feats
     - truncated_meta_feats
     - author_feats
+    - account_feats
     - prob_feats
-  truncation_first_n: 30
 
 cross_fitting: False
 

@@ -4,11 +4,17 @@ from few_shot.utils_nn import NeuralNetworkTrainer
 import xgboost as xgb
 import pandas as pd
 import os
+import logging
+import time
 import hydra
 from omegaconf import DictConfig, OmegaConf
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import f1_score, precision_score, recall_score, accuracy_score, roc_auc_score, average_precision_score
 from sklearn.model_selection import ParameterGrid
+
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 class MultiPromptHead():
@@ -56,9 +62,9 @@ class MultiPromptHead():
         self.data_dict_bc = self.pg_bc._read_prepared_data_fs()
         self.data_dict_mc = self.pg_mc._read_prepared_data_fs()
         self.meta_feats = open(self.config_mp["paths"]["meta_feat_names_path"], "r").read().replace("\n", " ").split(" ")
-        self.truncated_meta_feats = self.meta_feats[:self.config_mp["features"]["truncation_first_n"]]
-        self.truncated_meta_feats.extend(self.meta_feats[-18:])
-        self.author_feats = self.meta_feats[-18:]
+        self.truncated_meta_feats = open(self.config_mp["paths"]["truncated_meta_feat_names_path"], "r").read().replace("\n", " ").split(" ")
+        self.author_feats = open(self.config_mp["paths"]["author_feat_names_path"], "r").read().replace("\n", " ").split(" ")
+        self.account_feats = open(self.config_mp["paths"]["account_feat_names_path"], "r").read().replace("\n", " ").split(" ")
 
         if not os.path.exists(self.config_mp["paths"]["performance_logging"]):
             os.makedirs(self.config_mp["paths"]["performance_logging"])
@@ -97,6 +103,8 @@ class MultiPromptHead():
                 self.truncated_meta_feats.append(prob)
             if prob not in self.author_feats:
                 self.author_feats.append(prob)
+            if prob not in self.account_feats:
+                self.account_feats.append(prob)
 
 
     def elastic_net_head_train_val(self, train_data, features, val_data, model, params):
@@ -193,28 +201,38 @@ class MultiPromptHead():
 
 
     def run_experiments(self):
+        logger.info("Preparing data for k {}...".format(self.config_mp["k"]))
         self.get_prompt_forwards_probs()
         df_performance = pd.DataFrame(columns=["seed", "model", "feature_set", "best_grid", "accuracy", "precision", "recall", "f1", "auc", "aps"])
         for seed in self.data_dict_bc.keys():
             for model_type in list(self.config_mp["models"].keys()):
                 for feature_set in self.config_mp["features"]["feature_sets"]:
+                    logger.info("Starting run for k {}, model {}, feature set {}, seed {}...".format(self.config_mp["k"], model_type, feature_set, seed))
                     if feature_set == "meta_feats":
                         features = self.meta_feats
                     elif feature_set == "truncated_meta_feats":
                         features = self.truncated_meta_feats
                     elif feature_set == "author_feats":
                         features = self.author_feats
+                    elif feature_set == "account_feats":
+                        features = self.account_feats
                     else:
                         features = self.prob_feats
                     if self.config_mp["cross_fitting"]:
+                        logger.info("Starting HP-Tuning...")
+                        start_time = time.time()
                         best_score, best_grid = self.hp_tuning(self.data_dict_bc[seed]["pd"]["val"], features, self.data_dict_bc[seed]["pd"]["train"], model_type, seed)
+                        logger.info("HP-Tuning finished, took {} seconds".format(time.time() - start_time))
+                        logger.info("Starting testing...")
+                        start_time = time.time()
                         results = self.model_test(self.data_dict_bc[seed]["pd"]["val"], features, self.data_dict_bc[seed]["pd"]["train"], self.data_dict_bc[seed]["pd"]["test"], model_type, seed, best_grid)
+                        logger.info("Testing finished, took {} seconds".format(time.time() - start_time))
                     else:
                         best_score, best_grid = self.hp_tuning(self.data_dict_bc[seed]["pd"]["train"], features, self.data_dict_bc[seed]["pd"]["val"], model_type, seed)
                         results = self.model_test(self.data_dict_bc[seed]["pd"]["train"], features, self.data_dict_bc[seed]["pd"]["val"], self.data_dict_bc[seed]["pd"]["test"], model_type, seed, best_grid)
                     results.update({"seed": seed, "model": model_type, "feature_set": feature_set, "best_grid": best_grid})
                     df_performance = df_performance.append(results, ignore_index=True)
-                    df_performance.to_csv("{}_results_multiprompt_RPROP_k{}.csv".format(self.config_mp["paths"]["performance_logging"], self.config_mp["k"]), index=False)
+                    df_performance.to_csv("{}results_multiprompt_RPROP_k{}.csv".format(self.config_mp["paths"]["performance_logging"], self.config_mp["k"]), index=False)
 
 
 

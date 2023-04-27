@@ -1,0 +1,9 @@
+verified
+followers_count
+following_count
+tweet_count
+listed_count
+account_age_days
+followers_per_age
+following_per_age
+tweets_per_age
