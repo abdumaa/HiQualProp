@@ -35,7 +35,7 @@ train_args:
   num_freeze_layers: 16
   batch_size_train: 32
   batch_size_val: 32
-  eval_steps: 50
+  eval_steps: 500
   save_total_limit: 5
   learning_rate: 0.00004
   num_train_epochs: 5
