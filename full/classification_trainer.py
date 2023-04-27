@@ -50,18 +50,29 @@ class ClassificationTrainer():
             # Split dataset (70/10/20)
             if self.config["data"]["test_data_path"]:
                 _, data_test = train_test_split(test_data, test_size=0.2, random_state=seed, stratify=test_data[self.test_label])
-                data_train, data_val = train_test_split(data, test_size=0.1, random_state=seed, stratify=data[self.test_label])
-                data_test = data_test[list(data_train.columns)]
+                if self.test_label in data.columns:
+                    strat_col = self.test_label
+                else:
+                    strat_col = self.train_label
+                if self.config["data"]["val_size"]:
+                    val_size = self.config["data"]["val_size"]
+                else:
+                    val_size = 0.1
+                data_train, data_val = train_test_split(data, test_size=val_size, random_state=seed, stratify=data[strat_col])
+                train_cols = list(data_train.columns)
+                if self.test_label not in train_cols:
+                    train_cols.append(self.test_label)
+                data_test = data_test[train_cols]
             else:
                 data_train, data_test = train_test_split(data, test_size=0.2, random_state=seed, stratify=data[self.test_label])
                 data_train, data_val = train_test_split(data_train, train_size=(0.7/0.8), test_size=(0.1/0.8), random_state=seed, stratify=data_train[self.test_label])
 
             # Different column names handling in case of e.g. training with weak labels
             if self.test_label != self.train_label:
+                data_test = data_test.drop(columns=[self.train_label])
                 if self.test_label in data.columns:
                     data_train = data_train.drop(columns=[self.test_label])
                     data_val = data_val.drop(columns=[self.test_label])
-                    data_test = data_test.drop(columns=[self.train_label])
 
                 data_train = data_train.rename(columns={self.train_label: self.test_label})
                 data_val = data_val.rename(columns={self.train_label: self.test_label})

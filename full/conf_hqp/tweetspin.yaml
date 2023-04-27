@@ -12,11 +12,12 @@ seeds: #length of this list corresponds to the number of runs (& different data 
   - 567
 
 data:
-  data_path: Data/HiQualProp/df_tweets_HiQualProp.csv
-  test_data_path:
+  data_path: Data/TWEETSPIN/df_tweets_TWEETSPIN.csv
+  test_data_path: Data/HiQualProp/df_tweets_HiQualProp.csv
   data_splitted_dir: full/data_splitted/HiQualProp_TWEETSPIN
   need_data_prep: True
   train_data: TWEETSPIN
+  val_size: 0.001 # only used if test_data_path is not None
   train_label: labels_weak1
   test_label: labels
   text: text_normalized
