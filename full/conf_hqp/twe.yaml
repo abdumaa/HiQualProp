@@ -17,6 +17,7 @@ data:
   data_splitted_dir: full/data_splitted/TWE
   need_data_prep: True
   train_data: TWE
+  val_size: # only used if test_data_path is not None
   train_label: labels
   test_label: labels
   text: text_normalized

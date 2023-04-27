@@ -1,3 +1,3 @@
 ## Data Availability
 
-Upon individual requests (`blinded`), we can make the data with author features available.
+Upon individual requests (`anonymous`), we can make the data with author features available.
