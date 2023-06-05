@@ -12,7 +12,7 @@ data:
     - labels
     - strategy
   meta_feats: False
-  meta_feat_names_path: Data/author_feat_names.txt
+  meta_feat_names_path: Data/meta_feat_names.txt
 
 logging:
   path: few_shot/LMBFF_MC/

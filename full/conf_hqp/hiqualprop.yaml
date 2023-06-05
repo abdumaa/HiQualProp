@@ -22,7 +22,7 @@ data:
   test_label: labels
   text: text_normalized
   author_feats: False
-  author_feat_names_path: Data/author_feat_names.txt
+  author_feat_names_path: Data/meta_feat_names.txt
   emojis: True
   emojis_names_path: Data/emojis.txt
 
