@@ -5,7 +5,7 @@ This repository contains the data and the implementation of the experiments of t
 
 ## Overview
 
-In this work we present HQP, a high-quality human-annotated dataset for detecting online propaganda. Our work additionally includes:
+In this work we present HQP (and HQP+), a high-quality human-annotated dataset for detecting online propaganda. Our work additionally includes:
 
 1. Experiments on the performance of fully fine-tuning state-of-the-art pretrained language models on the task of detecting online propaganda on our dataset.
 2. Experiments on the performance of state-of-the-art few-shot learning (prompt-based learning with [LMBFF](https://arxiv.org/pdf/2012.15723.pdf)) on our dataset.
@@ -27,7 +27,7 @@ pip install -r requirements.txt
 
 **We only share tweet-ids and labels and not processed datasets in this repository due to Twitter privacy policy. However, upon individual requests (`blinded`), we can make the data available.**
 
-We keep our annotated HQP dataset in `Data/HiQualProp`.
+We keep our annotated HQP dataset in `Data/HiQualProp` and our extended dataset in `Data/HiQualProp+`.
 
 For few-shot learning, data samples would be generated to `few-shot/data_splitted` automatically when experiments are executed.
 
@@ -36,11 +36,12 @@ For few-shot learning, data samples would be generated to `few-shot/data_splitte
 To replicate full fine-tuning as in our work, execute the following command:
 
 ```bash
-python full/classification_trainer.py --multirun conf_hqp=hiqualprop,hiqualprop_mf,twe,tweetspin,weaklabels
+python full/classification_trainer.py --multirun conf_hqp=hiqualprop,hiqualprop+,hiqualprop_mf,twe,tweetspin,weaklabels
 ```
 
 This will fine-tune [BERT-large](https://aclanthology.org/N19-1423.pdf), [RoBERTa-large](https://arxiv.org/pdf/1907.11692.pdf), and [BERTweet-large](https://aclanthology.org/2020.emnlp-demos.2.pdf) (each 5 runs by default) on:
 * our HQP dataset (hiqualprop)
+* our HQP+ dataset (hiqualprop+)
 * our HQP dataset while incorporating author features (hiqualprop_mf)
 * the [TWE](https://truthandtrustonline.com/wp-content/uploads/2020/10/TTO03.pdf) dataset (twe)
 * the replicated [TWEETSPIN](https://aclanthology.org/2022.naacl-main.251.pdf) dataset (tweetspin)
